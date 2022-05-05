@@ -1,0 +1,6 @@
+name: CubicTracker
+version: '${version}'
+main: com.github.jenya705.cubictracker.CubicTracker
+api-version: 1.18
+authors: [ Jenya705 ]
+description: Tracker for Cubic
