@@ -4,25 +4,22 @@ import com.github.jenya705.cubictracker.CubicTracker;
 import com.github.jenya705.cubictracker.CubicTrackerConfig;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import lombok.Cleanup;
 import lombok.Getter;
 
+import java.io.IOException;
 import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.Properties;
 
 /**
  * @author Jenya705
  */
 @Getter
-public class CubicTrackerDatabase {
+public class DatabaseManager {
 
     private final HikariDataSource dataSource;
 
-    public CubicTrackerDatabase(CubicTracker plugin) {
+    public DatabaseManager(CubicTracker plugin) {
         HikariConfig hikariConfig = new HikariConfig();
         try (InputStream propertiesStream = plugin.getResource("hikari.properties")) {
             Properties properties = new Properties();
@@ -48,12 +45,18 @@ public class CubicTrackerDatabase {
                 plugin.config().getProperty(CubicTrackerConfig.SQL_PASSWORD)
         );
         dataSource = new HikariDataSource(hikariConfig);
-        try {
-            createMapTable("entities_map");
-            createMapTable("worlds_map");
-            createMapTable("materials_map");
-            createMapTable("actions_map");
-        } catch (SQLException e) {
+        try (InputStream setupSQLInputStream = plugin.getResource("setup.sql");
+             Statement statement = getConnection().createStatement()){
+            if (setupSQLInputStream == null) {
+                throw new IOException("setup.sql is not found in resources folder");
+            }
+            String setupSQL = new String(setupSQLInputStream.readAllBytes());
+            for (String operation: setupSQL.split(";")) {
+                if (operation.trim().isEmpty()) break;
+                statement.addBatch(operation + ";");
+            }
+            statement.executeLargeBatch();
+        } catch (SQLException | IOException e) {
             plugin.logger().error("Failed to setup:", e);
             throw new RuntimeException(e);
         }
@@ -63,25 +66,5 @@ public class CubicTrackerDatabase {
         return dataSource.getConnection();
     }
 
-    public void fastUpdate(String sql) throws SQLException {
-        @Cleanup Statement statement = getConnection().createStatement();
-        statement.execute(sql);
-    }
-
-    public ResultSet fastQuery(String sql) throws SQLException {
-        @Cleanup Statement statement = getConnection().createStatement();
-        return statement.executeQuery(sql);
-    }
-
-    private void createMapTable(String tableName) throws SQLException {
-        fastUpdate("""
-                CREATE TABLE IF NOT EXISTS %s (
-                    `id` INT NOT NULL AUTO_INCREMENT,
-                    `name` VARCHAR(255) NOT NULL,
-                    PRIMARY KEY(`id`),
-                    UNIQUE(`name`)
-                );
-                """.formatted(tableName));
-    }
 
 }

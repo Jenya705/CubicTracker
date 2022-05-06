@@ -2,8 +2,7 @@ package com.github.jenya705.cubictracker;
 
 import ch.jalu.configme.SettingsManager;
 import ch.jalu.configme.SettingsManagerBuilder;
-import com.github.jenya705.cubictracker.database.CubicTrackerDatabase;
-import com.github.jenya705.cubictracker.listener.CubicTrackerListenerContainer;
+import com.github.jenya705.cubictracker.database.DatabaseManager;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -22,8 +21,7 @@ public final class CubicTracker extends JavaPlugin {
     @Getter(AccessLevel.PRIVATE)
     private SettingsManager pluginConfig;
 
-    private CubicTrackerDatabase database;
-    private CubicTrackerListenerContainer listenerContainer;
+    private DatabaseManager database;
 
     @Override
     public void onEnable() {
@@ -34,8 +32,7 @@ public final class CubicTracker extends JavaPlugin {
                 .useDefaultMigrationService()
                 .create();
         pluginConfig.save();
-        database = new CubicTrackerDatabase(this);
-        listenerContainer = new CubicTrackerListenerContainer(this);
+        database = new DatabaseManager(this);
     }
 
     @Override
