@@ -8,18 +8,20 @@ import lombok.Getter;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Properties;
 
 /**
  * @author Jenya705
  */
 @Getter
-public class DatabaseManager {
+public class DBConnection {
 
     private final HikariDataSource dataSource;
 
-    public DatabaseManager(CubicTracker plugin) {
+    public DBConnection(CubicTracker plugin) {
         HikariConfig hikariConfig = new HikariConfig();
         try (InputStream propertiesStream = plugin.getResource("hikari.properties")) {
             Properties properties = new Properties();

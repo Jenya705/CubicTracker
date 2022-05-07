@@ -2,7 +2,9 @@ package com.github.jenya705.cubictracker;
 
 import ch.jalu.configme.SettingsManager;
 import ch.jalu.configme.SettingsManagerBuilder;
-import com.github.jenya705.cubictracker.database.DatabaseManager;
+import com.github.jenya705.cubictracker.database.DBConnection;
+import com.github.jenya705.cubictracker.database.query.ActionQueryQueue;
+import com.github.jenya705.cubictracker.listener.TestListener;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -15,13 +17,12 @@ import java.io.File;
 @Getter
 public final class CubicTracker extends JavaPlugin {
 
-    @Getter(AccessLevel.PRIVATE)
-    private final Logger pluginLogger = getSLF4JLogger();
+    @Getter(AccessLevel.PRIVATE) private final Logger pluginLogger = getSLF4JLogger();
+    @Getter(AccessLevel.PRIVATE) private SettingsManager pluginConfig;
 
-    @Getter(AccessLevel.PRIVATE)
-    private SettingsManager pluginConfig;
+    private final ActionQueryQueue queryQueue = new ActionQueryQueue(this);
 
-    private DatabaseManager database;
+    private DBConnection dbConnection;
 
     @Override
     public void onEnable() {
@@ -32,7 +33,9 @@ public final class CubicTracker extends JavaPlugin {
                 .useDefaultMigrationService()
                 .create();
         pluginConfig.save();
-        database = new DatabaseManager(this);
+        dbConnection = new DBConnection(this);
+        queryQueue.start();
+        getServer().getPluginManager().registerEvents(new TestListener(this), this);
     }
 
     @Override
